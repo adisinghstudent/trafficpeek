@@ -154,6 +154,7 @@ async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<Traff
     console.log('RapidAPI response:', JSON.stringify(data, null, 2));
 
     // Parse the Similarweb Insights response
+    // API returns: { Traffic: { Visits: {date: count}, Engagement: {...} }, Rank: { GlobalRank, CountryRank, CategoryRank } }
     let monthlyVisits: number | null = null;
     let globalRank: number | null = null;
     let countryRank: number | null = null;
@@ -162,41 +163,52 @@ async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<Traff
     let pagesPerVisit: number | null = null;
     let bounceRate: number | null = null;
 
-    // Check various response structures
-    if (data.estimatedMonthlyVisits) {
+    // Extract monthly visits from Traffic.Visits (object with date keys)
+    if (data.Traffic?.Visits && typeof data.Traffic.Visits === 'object') {
+      const visits = data.Traffic.Visits as Record<string, number>;
+      const sortedDates = Object.keys(visits).sort().reverse();
+      if (sortedDates.length > 0) {
+        // Get the most recent month's visits
+        monthlyVisits = visits[sortedDates[0]] || null;
+      }
+    }
+
+    // Fallback: check other possible structures
+    if (!monthlyVisits && data.estimatedMonthlyVisits) {
       const visits = data.estimatedMonthlyVisits;
-      if (Array.isArray(visits) && visits.length > 0) {
-        monthlyVisits = visits[visits.length - 1]?.value || visits[visits.length - 1]?.visits || null;
-      } else if (typeof visits === 'object') {
+      if (typeof visits === 'object') {
         const values = Object.values(visits as Record<string, number>);
         monthlyVisits = values[values.length - 1] || null;
       }
     }
 
-    if (data.EstimatedMonthlyVisits) {
-      const visits = Object.values(data.EstimatedMonthlyVisits as Record<string, number>);
-      monthlyVisits = visits[visits.length - 1] || null;
+    // Extract ranks from Rank object
+    if (data.Rank) {
+      globalRank = data.Rank.GlobalRank || null;
+      countryRank = data.Rank.CountryRank?.Rank || null;
+      categoryRank = data.Rank.CategoryRank?.Rank || null;
     }
 
-    if (data.totalVisits) {
-      monthlyVisits = data.totalVisits;
+    // Fallback rank extraction
+    if (!globalRank) {
+      globalRank = data.globalRank || data.GlobalRank?.Rank || null;
     }
 
-    if (data.traffic?.totalVisits) {
-      monthlyVisits = data.traffic.totalVisits;
+    // Extract engagement metrics from Traffic.Engagement
+    if (data.Traffic?.Engagement) {
+      const engagement = data.Traffic.Engagement;
+      // TimeOnSite is in minutes (0.24 = 14 seconds), convert to seconds
+      avgVisitDuration = engagement.TimeOnSite ? Math.round(engagement.TimeOnSite * 60) : null;
+      pagesPerVisit = engagement.PagesPerVisit || null;
+      bounceRate = engagement.BounceRate || null;
     }
 
-    // Extract ranks
-    globalRank = data.globalRank || data.GlobalRank?.Rank || data.rank?.global || null;
-    countryRank = data.countryRank || data.CountryRank?.Rank || data.rank?.country || null;
-    categoryRank = data.categoryRank || data.CategoryRank?.Rank || data.rank?.category || null;
-
-    // Extract engagement metrics
-    if (data.engagements || data.Engagments || data.engagement) {
-      const engagement = data.engagements || data.Engagments || data.engagement;
-      avgVisitDuration = engagement.timeOnSite || engagement.TimeOnSite || engagement.avgVisitDuration || null;
-      pagesPerVisit = engagement.pagesPerVisit || engagement.PagePerVisit || engagement.pagePerVisit || null;
-      bounceRate = engagement.bounceRate || engagement.BounceRate || null;
+    // Fallback engagement extraction
+    if (!avgVisitDuration && (data.engagements || data.engagement)) {
+      const engagement = data.engagements || data.engagement;
+      avgVisitDuration = engagement.timeOnSite || engagement.TimeOnSite || null;
+      pagesPerVisit = pagesPerVisit || engagement.pagesPerVisit || engagement.PagesPerVisit || null;
+      bounceRate = bounceRate || engagement.bounceRate || engagement.BounceRate || null;
     }
 
     // If we got valid data, return it
