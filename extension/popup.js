@@ -146,11 +146,17 @@ async function fetchTrafficData(domain) {
     headers,
   });
 
+  const data = await response.json();
+
+  // Handle 404 - domain not in Tranco and no API key
   if (!response.ok) {
+    if (response.status === 404) {
+      return { notFound: true, domain, message: data.message };
+    }
     throw new Error(`API error: ${response.status}`);
   }
 
-  return response.json();
+  return data;
 }
 
 // Render the stats UI
@@ -232,9 +238,9 @@ function renderStats(data) {
       </div>
     </div>
 
-    ${data.isEstimate ? `
+    ${data.source === 'tranco' ? `
     <div class="disclaimer">
-      Traffic data is estimated. <a href="#" id="addApiKeyLink">Add API key</a> for real data.
+      Traffic estimated from Tranco ranking. <a href="#" id="addApiKeyLink">Add API key</a> for SimilarWeb data.
     </div>
     ` : ''}
   `;
@@ -270,6 +276,33 @@ function renderError(message) {
       <button onclick="init()" class="retry-btn">Retry</button>
     </div>
   `;
+}
+
+// Render no data state (domain not in Tranco)
+function renderNoData(domain) {
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="domain-info">
+      <div class="domain-name">${domain}</div>
+      <div class="domain-rank">Not in top 1M websites</div>
+    </div>
+
+    <div class="no-data-message">
+      <div class="no-data-icon">📊</div>
+      <p class="no-data-title">No Traffic Data</p>
+      <p class="no-data-text">This site isn't tracked in the Tranco top 1 million list.</p>
+      <p class="no-data-text">Add a <a href="#" id="addApiKeyLinkNoData">SimilarWeb API key</a> to get data for any website.</p>
+    </div>
+  `;
+
+  // Add click handler for API key link
+  const addApiKeyLink = document.getElementById('addApiKeyLinkNoData');
+  if (addApiKeyLink) {
+    addApiKeyLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleView('settings');
+    });
+  }
 }
 
 // Setup event listeners
@@ -337,7 +370,12 @@ async function init() {
 
       // Fetch traffic data from API
       const data = await fetchTrafficData(domain);
-      renderStats(data);
+
+      if (data.notFound) {
+        renderNoData(domain);
+      } else {
+        renderStats(data);
+      }
     }
 
   } catch (error) {

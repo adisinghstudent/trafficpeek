@@ -125,34 +125,6 @@ function createEstimateResponse(
   };
 }
 
-// Fallback estimation when domain is not in Tranco
-function estimateUnrankedDomain(domain: string): TrafficData {
-  // For domains not in Tranco (outside top 1M), estimate based on characteristics
-  let estimatedRank = 2_000_000; // Default: outside top 1M
-
-  // TLD adjustments
-  if (domain.endsWith('.com')) estimatedRank = 1_500_000;
-  else if (domain.endsWith('.org')) estimatedRank = 1_800_000;
-  else if (domain.endsWith('.net')) estimatedRank = 1_900_000;
-  else if (domain.endsWith('.io')) estimatedRank = 1_200_000;
-  else if (domain.endsWith('.dev')) estimatedRank = 1_300_000;
-  else if (domain.endsWith('.app')) estimatedRank = 1_400_000;
-  else if (domain.endsWith('.ai')) estimatedRank = 1_100_000;
-
-  // Shorter domains tend to be more popular
-  const parts = domain.split('.');
-  const mainPart = parts[0];
-  if (mainPart.length <= 4) estimatedRank *= 0.7;
-  else if (mainPart.length <= 8) estimatedRank *= 0.85;
-  else estimatedRank *= 1.1;
-
-  // Add consistent variance based on domain name
-  const hash = domain.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  estimatedRank = Math.round(estimatedRank * (0.9 + (hash % 100) / 500));
-
-  const visits = estimateVisitsFromRank(estimatedRank);
-  return createEstimateResponse(domain, estimatedRank, visits, 'estimate');
-}
 
 // Fetch from RapidAPI SimilarWeb
 async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<TrafficData | null> {
@@ -289,7 +261,7 @@ export async function GET(request: NextRequest) {
   // Try to fetch real data from RapidAPI first
   let data = await fetchFromRapidAPI(cleanDomain, apiKey || undefined);
 
-  // Fall back to Tranco-based estimation if no API data
+  // Fall back to Tranco if no API data
   if (!data) {
     // Fetch real ranking from Tranco
     const trancoRank = await fetchTrancoRank(cleanDomain);
@@ -298,10 +270,26 @@ export async function GET(request: NextRequest) {
       // Domain found in Tranco - use real rank with calibrated estimation
       const visits = estimateVisitsFromRank(trancoRank);
       data = createEstimateResponse(cleanDomain, trancoRank, visits, 'tranco');
-    } else {
-      // Domain not in Tranco - estimate based on characteristics
-      data = estimateUnrankedDomain(cleanDomain);
     }
+  }
+
+  // If no data from either source, return not found
+  if (!data) {
+    return NextResponse.json(
+      {
+        error: 'No data available',
+        domain: cleanDomain,
+        message: 'This domain is not in the top 1 million websites. Add a SimilarWeb API key for data on smaller sites.',
+      },
+      {
+        status: 404,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, X-RapidAPI-Key',
+        },
+      }
+    );
   }
 
   // Add CORS headers for extension
