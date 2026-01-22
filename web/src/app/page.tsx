@@ -1,106 +1,104 @@
-import Link from "next/link";
-
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] to-[#16213e] text-white">
+    <div className="min-h-screen bg-[#F0F0F0] text-[#191919]">
       {/* Header */}
-      <header className="container mx-auto px-6 py-6">
+      <header className="container mx-auto px-6 py-8">
         <nav className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-xl flex items-center justify-center text-xl">
-              📊
-            </div>
-            <span className="text-xl font-bold">TrafficPeek</span>
+            <span className="font-serif text-2xl tracking-tight">TrafficPeek</span>
           </div>
-          <div className="flex items-center gap-6">
-            <a
-              href="https://github.com/anthropics/trafficpeek"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-            >
-              <GitHubIcon />
-              <span className="hidden sm:inline">GitHub</span>
-            </a>
-          </div>
+          <a
+            href="https://github.com/adisinghstudent/trafficpeek"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-[#4A5565] hover:text-[#191919] transition-colors"
+          >
+            <GitHubIcon />
+            <span className="hidden sm:inline">GitHub</span>
+          </a>
         </nav>
       </header>
 
       {/* Hero */}
-      <main className="container mx-auto px-6 py-20">
+      <main className="container mx-auto px-6 py-16">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">
-            Website Traffic Stats at a Glance
+          <h1 className="font-serif text-[clamp(48px,10vw,120px)] leading-[0.95] tracking-tight mb-8">
+            Website traffic,{" "}
+            <span className="relative inline-block">
+              <span className="relative z-10">at a glance</span>
+              <span
+                className="absolute left-0 right-0 bottom-[0.1em] h-[0.35em] bg-[#FEF08A] -z-0"
+                style={{ transform: "rotate(-1deg)" }}
+              />
+            </span>
           </h1>
-          <p className="text-xl text-white/70 mb-10 max-w-2xl mx-auto">
-            Free, open-source Chrome extension that shows estimated monthly visits and 30-day traffic graphs for any website you browse.
+          <p className="text-2xl text-[#4A5565] mb-12 max-w-2xl mx-auto leading-relaxed">
+            A <em>free</em>, open-source Chrome extension that shows estimated monthly visits and 30-day traffic graphs for any website you browse.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
             <a
               href="#install"
-              className="px-8 py-4 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              className="group px-8 py-4 bg-[#EB4F3E] text-white rounded-full text-lg hover:bg-[#D4453A] transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <ChromeIcon />
               Install for Chrome
             </a>
             <a
-              href="https://github.com/anthropics/trafficpeek"
+              href="https://github.com/adisinghstudent/trafficpeek"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-8 py-4 bg-white/10 rounded-xl font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-white/60 backdrop-blur-xl border border-white/50 rounded-full text-lg hover:bg-white/80 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)" }}
             >
               <GitHubIcon />
               View Source
             </a>
           </div>
 
-          {/* Screenshot */}
+          {/* Extension Preview */}
           <div className="relative max-w-sm mx-auto">
-            <div className="bg-[#1a1a2e] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
-              <div className="p-5">
-                <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/10">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-lg flex items-center justify-center">
-                    📊
-                  </div>
-                  <span className="font-semibold">TrafficPeek</span>
+            <div
+              className="bg-white rounded-3xl p-6 shadow-lg border border-black/5"
+              style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}
+            >
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-black/5">
+                <div className="w-10 h-10 bg-[#EB4F3E] rounded-xl flex items-center justify-center text-white text-lg">
+                  📊
                 </div>
-                <div className="bg-white/5 rounded-xl p-4 mb-4">
-                  <div className="text-[#667eea] font-semibold mb-1">github.com</div>
-                  <div className="text-sm text-white/50">Global Rank: #50</div>
+                <span className="font-serif text-xl">TrafficPeek</span>
+              </div>
+              <div className="bg-[#FAF9F7] rounded-2xl p-4 mb-4">
+                <div className="text-[#EB4F3E] font-medium text-lg mb-1">github.com</div>
+                <div className="text-sm text-[#6B7280]">Global Rank: #50</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-[#FAF9F7] rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-serif text-[#EB4F3E]">892M</div>
+                  <div className="text-xs text-[#6B7280] uppercase tracking-wide mt-1">Monthly Visits</div>
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 mt-2">
+                    ↑ 12%
+                  </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-white/5 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">
-                      892M
-                    </div>
-                    <div className="text-xs text-white/50 uppercase tracking-wide mt-1">Monthly Visits</div>
-                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 mt-2">
-                      ↑ 12%
-                    </span>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">
-                      29.7M
-                    </div>
-                    <div className="text-xs text-white/50 uppercase tracking-wide mt-1">Avg Daily Visits</div>
-                  </div>
+                <div className="bg-[#FAF9F7] rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-serif text-[#EB4F3E]">29.7M</div>
+                  <div className="text-xs text-[#6B7280] uppercase tracking-wide mt-1">Avg Daily</div>
                 </div>
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-sm font-semibold mb-3 text-white/80">Last 30 Days</div>
-                  <div className="flex items-end gap-1 h-20">
-                    {[40, 45, 38, 52, 48, 55, 42, 58, 62, 55, 68, 72, 65, 78, 82, 75, 88, 85, 92, 88, 95, 90, 85, 92, 88, 95, 100, 92, 88, 95].map((h, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 bg-gradient-to-t from-[#667eea] to-[#764ba2] rounded-t"
-                        style={{ height: `${h}%` }}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-white/40">
-                    <span>30 days ago</span>
-                    <span>Today</span>
-                  </div>
+              </div>
+              <div className="bg-[#FAF9F7] rounded-2xl p-4">
+                <div className="text-sm font-medium mb-3 text-[#4A5565]">Last 30 Days</div>
+                <div className="flex items-end gap-1 h-16">
+                  {[40, 45, 38, 52, 48, 55, 42, 58, 62, 55, 68, 72, 65, 78, 82, 75, 88, 85, 92, 88, 95, 90, 85, 92, 88, 95, 100, 92, 88, 95].map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-[#EB4F3E] rounded-t opacity-80"
+                      style={{ height: `${h}%` }}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-[#6B7280]">
+                  <span>30 days ago</span>
+                  <span>Today</span>
                 </div>
               </div>
             </div>
@@ -109,92 +107,113 @@ export default function Home() {
 
         {/* Features */}
         <section className="max-w-4xl mx-auto mt-32">
-          <h2 className="text-3xl font-bold text-center mb-12">Features</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-              <div className="text-3xl mb-4">⚡</div>
-              <h3 className="text-xl font-semibold mb-2">Instant Stats</h3>
-              <p className="text-white/60">Get traffic estimates for any website with a single click. No account required.</p>
+          <h2 className="font-serif text-[clamp(36px,6vw,64px)] text-center mb-16">
+            Why you&apos;ll{" "}
+            <span className="relative inline-block">
+              <span className="relative z-10">love it</span>
+              <span
+                className="absolute left-0 right-0 bottom-[0.1em] h-[0.3em] bg-[#FEF08A] -z-0"
+                style={{ transform: "rotate(0.5deg)" }}
+              />
+            </span>
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-3xl p-8 border border-black/5">
+              <div className="text-4xl mb-4">⚡</div>
+              <h3 className="font-serif text-2xl mb-3">Instant Stats</h3>
+              <p className="text-[#4A5565] text-lg leading-relaxed">
+                Get traffic estimates for <em>any website</em> with a single click. No account required.
+              </p>
             </div>
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-              <div className="text-3xl mb-4">📈</div>
-              <h3 className="text-xl font-semibold mb-2">30-Day Graph</h3>
-              <p className="text-white/60">Visualize traffic trends over the past month with an interactive chart.</p>
+            <div className="bg-white rounded-3xl p-8 border border-black/5">
+              <div className="text-4xl mb-4">📈</div>
+              <h3 className="font-serif text-2xl mb-3">30-Day Graph</h3>
+              <p className="text-[#4A5565] text-lg leading-relaxed">
+                Visualize traffic trends over the past month with an interactive chart.
+              </p>
             </div>
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-              <div className="text-3xl mb-4">🔓</div>
-              <h3 className="text-xl font-semibold mb-2">100% Open Source</h3>
-              <p className="text-white/60">Free forever. View the source code, contribute, or self-host.</p>
+            <div className="bg-white rounded-3xl p-8 border border-black/5">
+              <div className="text-4xl mb-4">🔓</div>
+              <h3 className="font-serif text-2xl mb-3">100% Open Source</h3>
+              <p className="text-[#4A5565] text-lg leading-relaxed">
+                Free forever. View the source code, contribute, or self-host.
+              </p>
             </div>
           </div>
         </section>
 
         {/* Install Section */}
         <section id="install" className="max-w-4xl mx-auto mt-32">
-          <h2 className="text-3xl font-bold text-center mb-12">Install</h2>
+          <h2 className="font-serif text-[clamp(36px,6vw,64px)] text-center mb-16">
+            Get started
+          </h2>
           <div className="grid md:grid-cols-2 gap-6">
             <a
               href="#"
-              className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-colors group"
+              className="group bg-white rounded-3xl p-8 border border-black/5 hover:border-[#EB4F3E]/30 transition-all hover:scale-[1.01]"
             >
               <div className="flex items-center gap-4 mb-4">
-                <ChromeIcon className="w-12 h-12" />
+                <ChromeIcon className="w-12 h-12 text-[#4285F4]" />
                 <div>
-                  <h3 className="text-xl font-semibold">Chrome</h3>
-                  <p className="text-white/50 text-sm">Chrome Web Store</p>
+                  <h3 className="font-serif text-2xl">Chrome</h3>
+                  <p className="text-[#6B7280]">Chrome Web Store</p>
                 </div>
               </div>
-              <p className="text-white/60 group-hover:text-white/80 transition-colors">
+              <p className="text-[#4A5565] group-hover:text-[#EB4F3E] transition-colors text-lg">
                 Install from the Chrome Web Store →
               </p>
             </a>
             <a
               href="#"
-              className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-colors group"
+              className="group bg-white rounded-3xl p-8 border border-black/5 hover:border-[#EB4F3E]/30 transition-all hover:scale-[1.01]"
             >
               <div className="flex items-center gap-4 mb-4">
-                <ArcIcon className="w-12 h-12" />
+                <ArcIcon className="w-12 h-12 text-[#FC60A8]" />
                 <div>
-                  <h3 className="text-xl font-semibold">Arc</h3>
-                  <p className="text-white/50 text-sm">Works with Arc Browser</p>
+                  <h3 className="font-serif text-2xl">Arc</h3>
+                  <p className="text-[#6B7280]">Works with Arc Browser</p>
                 </div>
               </div>
-              <p className="text-white/60 group-hover:text-white/80 transition-colors">
+              <p className="text-[#4A5565] group-hover:text-[#EB4F3E] transition-colors text-lg">
                 Install from Chrome Web Store →
               </p>
             </a>
           </div>
 
-          <div className="mt-8 bg-white/5 rounded-2xl p-6 border border-white/10">
-            <h3 className="text-xl font-semibold mb-4">Manual Installation</h3>
-            <p className="text-white/60 mb-4">Or install directly from source:</p>
-            <div className="bg-black/30 rounded-xl p-4 font-mono text-sm">
-              <div className="flex items-center justify-between">
-                <code>git clone https://github.com/anthropics/trafficpeek.git</code>
-                <button className="text-white/50 hover:text-white transition-colors">
-                  📋
-                </button>
-              </div>
+          <div className="mt-8 bg-white rounded-3xl p-8 border border-black/5">
+            <h3 className="font-serif text-2xl mb-4">Manual Installation</h3>
+            <p className="text-[#4A5565] mb-6 text-lg">Or install directly from source:</p>
+            <div className="bg-[#FAF9F7] rounded-2xl p-5 font-mono text-base">
+              <code className="text-[#191919]">git clone https://github.com/adisinghstudent/trafficpeek.git</code>
             </div>
-            <ol className="mt-4 space-y-2 text-white/60 text-sm">
+            <ol className="mt-6 space-y-3 text-[#4A5565] text-lg">
               <li>1. Clone the repository</li>
               <li>2. Open Chrome → Extensions → Enable Developer Mode</li>
-              <li>3. Click &quot;Load unpacked&quot; → Select the <code className="bg-white/10 px-1.5 py-0.5 rounded">extension</code> folder</li>
+              <li>3. Click &quot;Load unpacked&quot; → Select the <code className="bg-[#FAF9F7] px-2 py-1 rounded-lg text-base">extension</code> folder</li>
             </ol>
           </div>
         </section>
 
         {/* Open Source Section */}
         <section className="max-w-4xl mx-auto mt-32 text-center">
-          <h2 className="text-3xl font-bold mb-6">100% Open Source</h2>
-          <p className="text-xl text-white/70 mb-8 max-w-2xl mx-auto">
-            TrafficPeek is free and open source under the MIT license. View the code, report issues, or contribute on GitHub.
+          <h2 className="font-serif text-[clamp(36px,6vw,64px)] mb-6">
+            <span className="relative inline-block">
+              <span className="relative z-10">100% Open Source</span>
+              <span
+                className="absolute left-0 right-0 bottom-[0.1em] h-[0.3em] bg-[#FEF08A] -z-0"
+                style={{ transform: "rotate(-0.5deg)" }}
+              />
+            </span>
+          </h2>
+          <p className="text-2xl text-[#4A5565] mb-10 max-w-2xl mx-auto leading-relaxed">
+            TrafficPeek is <em>free and open source</em> under the MIT license. View the code, report issues, or contribute on GitHub.
           </p>
           <a
-            href="https://github.com/anthropics/trafficpeek"
+            href="https://github.com/adisinghstudent/trafficpeek"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 rounded-xl font-semibold hover:bg-white/20 transition-colors"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white/60 backdrop-blur-xl border border-white/50 rounded-full text-lg hover:bg-white/80 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+            style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)" }}
           >
             <GitHubIcon />
             View on GitHub
@@ -203,20 +222,14 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="container mx-auto px-6 py-12 mt-20 border-t border-white/10">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-lg flex items-center justify-center text-sm">
-              📊
-            </div>
-            <span className="font-semibold">TrafficPeek</span>
-          </div>
-          <nav className="flex items-center gap-6 text-sm text-white/50">
-            <a href="https://github.com/anthropics/trafficpeek" className="hover:text-white transition-colors">GitHub</a>
-            <a href="https://github.com/anthropics/trafficpeek/issues" className="hover:text-white transition-colors">Issues</a>
-            <a href="https://github.com/anthropics/trafficpeek/discussions" className="hover:text-white transition-colors">Discussions</a>
+      <footer className="container mx-auto px-6 py-16 mt-20 border-t border-black/5">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <span className="font-serif text-xl">TrafficPeek</span>
+          <nav className="flex items-center gap-8 text-[#4A5565]">
+            <a href="https://github.com/adisinghstudent/trafficpeek" className="hover:text-[#EB4F3E] transition-colors">GitHub</a>
+            <a href="https://github.com/adisinghstudent/trafficpeek/issues" className="hover:text-[#EB4F3E] transition-colors">Issues</a>
           </nav>
-          <p className="text-sm text-white/30">MIT License</p>
+          <p className="text-[#6B7280]">MIT License</p>
         </div>
       </footer>
     </div>
