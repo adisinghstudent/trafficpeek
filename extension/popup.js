@@ -1,11 +1,7 @@
 // TrafficPeek - Website Traffic Statistics Extension
+// Uses backend API for real traffic data
 
-const TRANCO_LIST_URL = 'https://tranco-list.eu/download/X4JNW/1000000';
-
-// Cache for Tranco rankings
-let trancoCache = null;
-let trancoCacheTime = 0;
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const API_BASE_URL = 'https://trafficpeek.vercel.app/api/traffic';
 
 // Format large numbers
 function formatNumber(num) {
@@ -21,43 +17,24 @@ function formatNumber(num) {
   return num.toString();
 }
 
-// Estimate monthly visits based on Tranco rank
-function estimateMonthlyVisits(rank) {
-  if (!rank) return null;
-
-  // Exponential decay model based on industry estimates
-  // Top sites get billions, rank 1M gets ~1000 visits
-  const baseVisits = 50000000000; // 50B for rank 1
-  const decayRate = 0.000012;
-
-  const visits = baseVisits * Math.exp(-decayRate * rank);
-  return Math.max(1000, Math.round(visits));
-}
-
-// Generate realistic 30-day traffic data with some variance
-function generate30DayData(baseVisits) {
-  const data = [];
-  const dailyBase = baseVisits / 30;
-
-  for (let i = 0; i < 30; i++) {
-    // Add variance: weekends slightly lower, random noise
-    const dayOfWeek = (new Date().getDay() - (29 - i) + 7) % 7;
-    const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.85 : 1;
-    const randomFactor = 0.8 + Math.random() * 0.4; // 80% to 120%
-
-    const dayVisits = Math.round(dailyBase * weekendFactor * randomFactor);
-    data.push(dayVisits);
+// Format duration in seconds to readable format
+function formatDuration(seconds) {
+  if (!seconds) return 'N/A';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  if (mins > 0) {
+    return `${mins}m ${secs}s`;
   }
-
-  return data;
+  return `${secs}s`;
 }
 
-// Calculate trend from data
-function calculateTrend(data) {
-  if (data.length < 14) return { direction: 'neutral', percent: 0 };
+// Calculate trend from history data
+function calculateTrend(history) {
+  if (!history || history.length < 14) return { direction: 'neutral', percent: 0 };
 
-  const firstHalf = data.slice(0, 15).reduce((a, b) => a + b, 0);
-  const secondHalf = data.slice(15).reduce((a, b) => a + b, 0);
+  const midpoint = Math.floor(history.length / 2);
+  const firstHalf = history.slice(0, midpoint).reduce((a, b) => a + b.visits, 0);
+  const secondHalf = history.slice(midpoint).reduce((a, b) => a + b.visits, 0);
 
   const change = ((secondHalf - firstHalf) / firstHalf) * 100;
 
@@ -70,116 +47,113 @@ function calculateTrend(data) {
 function extractDomain(url) {
   try {
     const hostname = new URL(url).hostname;
-    // Remove www. prefix
     return hostname.replace(/^www\./, '');
   } catch {
     return null;
   }
 }
 
-// Fetch and parse Tranco list (cached)
-async function fetchTrancoRank(domain) {
-  // Check cache first
-  const cached = await chrome.storage.local.get(['trancoData', 'trancoCacheTime']);
+// Fetch traffic data from backend API
+async function fetchTrafficData(domain) {
+  const response = await fetch(`${API_BASE_URL}?domain=${encodeURIComponent(domain)}`);
 
-  if (cached.trancoData && cached.trancoCacheTime &&
-      (Date.now() - cached.trancoCacheTime) < CACHE_DURATION) {
-    // Use cached data
-    const rank = cached.trancoData[domain];
-    return rank || null;
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
   }
 
-  // For demo/MVP, we'll use a simplified approach
-  // In production, you'd fetch the full Tranco list or use their API
-
-  // Estimate rank based on common domains (fallback heuristics)
-  const knownRanks = {
-    'google.com': 1,
-    'youtube.com': 2,
-    'facebook.com': 3,
-    'twitter.com': 4,
-    'instagram.com': 5,
-    'linkedin.com': 10,
-    'reddit.com': 15,
-    'amazon.com': 8,
-    'netflix.com': 20,
-    'github.com': 50,
-    'stackoverflow.com': 100,
-    'medium.com': 200,
-    'vercel.app': 5000,
-  };
-
-  // Check if domain matches any known domain
-  for (const [known, rank] of Object.entries(knownRanks)) {
-    if (domain === known || domain.endsWith('.' + known)) {
-      return rank;
-    }
-  }
-
-  // For unknown domains, estimate based on TLD and other heuristics
-  const tldRanks = {
-    '.com': 50000,
-    '.org': 100000,
-    '.net': 100000,
-    '.io': 150000,
-    '.co': 200000,
-    '.dev': 250000,
-    '.app': 200000,
-  };
-
-  for (const [tld, baseRank] of Object.entries(tldRanks)) {
-    if (domain.endsWith(tld)) {
-      // Add some randomness based on domain length (shorter = likely more popular)
-      const lengthFactor = Math.min(2, domain.length / 10);
-      return Math.round(baseRank * lengthFactor + Math.random() * 50000);
-    }
-  }
-
-  // Default for other TLDs
-  return 500000 + Math.round(Math.random() * 200000);
+  return response.json();
 }
 
 // Render the stats UI
-function renderStats(domain, rank, monthlyVisits, dailyData) {
-  const trend = calculateTrend(dailyData);
-  const avgDailyVisits = Math.round(monthlyVisits / 30);
-  const maxDaily = Math.max(...dailyData);
+function renderStats(data) {
+  const trend = calculateTrend(data.trafficHistory);
+  const avgDailyVisits = data.monthlyVisits ? Math.round(data.monthlyVisits / 30) : null;
+  const maxDaily = data.trafficHistory ? Math.max(...data.trafficHistory.map(d => d.visits)) : 1;
 
   const trendClass = trend.direction;
   const trendIcon = trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→';
   const trendText = trend.percent > 0 ? `${trendIcon} ${trend.percent}%` : `${trendIcon} Stable`;
 
+  // Data source indicator
+  const sourceLabel = data.isEstimate ?
+    '<span class="source-badge estimate">Estimate</span>' :
+    '<span class="source-badge real">SimilarWeb</span>';
+
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="domain-info">
-      <div class="domain-name">${domain}</div>
-      <div class="domain-rank">Global Rank: #${formatNumber(rank)}</div>
+      <div class="domain-name">${data.domain}</div>
+      <div class="domain-rank">
+        Global Rank: ${data.globalRank ? '#' + formatNumber(data.globalRank) : 'N/A'}
+        ${sourceLabel}
+      </div>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-value">${formatNumber(monthlyVisits)}</div>
+        <div class="stat-value">${data.monthlyVisits ? formatNumber(data.monthlyVisits) : 'N/A'}</div>
         <div class="stat-label">Monthly Visits</div>
         <span class="trend ${trendClass}">${trendText}</span>
       </div>
       <div class="stat-card">
-        <div class="stat-value">${formatNumber(avgDailyVisits)}</div>
+        <div class="stat-value">${avgDailyVisits ? formatNumber(avgDailyVisits) : 'N/A'}</div>
         <div class="stat-label">Avg Daily Visits</div>
       </div>
     </div>
 
+    ${data.avgVisitDuration || data.pagesPerVisit || data.bounceRate ? `
+    <div class="engagement-stats">
+      ${data.avgVisitDuration ? `
+        <div class="engagement-item">
+          <span class="engagement-value">${formatDuration(data.avgVisitDuration)}</span>
+          <span class="engagement-label">Avg Visit</span>
+        </div>
+      ` : ''}
+      ${data.pagesPerVisit ? `
+        <div class="engagement-item">
+          <span class="engagement-value">${data.pagesPerVisit.toFixed(1)}</span>
+          <span class="engagement-label">Pages/Visit</span>
+        </div>
+      ` : ''}
+      ${data.bounceRate ? `
+        <div class="engagement-item">
+          <span class="engagement-value">${(data.bounceRate * 100).toFixed(0)}%</span>
+          <span class="engagement-label">Bounce Rate</span>
+        </div>
+      ` : ''}
+    </div>
+    ` : ''}
+
     <div class="chart-container">
       <div class="chart-title">Last 30 Days</div>
       <div class="chart">
-        ${dailyData.map((value, i) => {
-          const height = (value / maxDaily) * 100;
-          return `<div class="chart-bar" style="height: ${height}%" data-value="${formatNumber(value)}"></div>`;
-        }).join('')}
+        ${data.trafficHistory ? data.trafficHistory.map((day, i) => {
+          const height = maxDaily > 0 ? (day.visits / maxDaily) * 100 : 0;
+          return `<div class="chart-bar" style="height: ${height}%" data-value="${formatNumber(day.visits)}" data-date="${day.date}"></div>`;
+        }).join('') : '<div class="no-data">No history available</div>'}
       </div>
       <div class="chart-labels">
         <span>30 days ago</span>
         <span>Today</span>
       </div>
+    </div>
+
+    ${data.isEstimate ? `
+    <div class="disclaimer">
+      Traffic data is estimated based on domain ranking.
+      <a href="https://trafficpeek.vercel.app" target="_blank">Learn more</a>
+    </div>
+    ` : ''}
+  `;
+}
+
+// Render loading state
+function renderLoading() {
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <p>Fetching traffic data...</p>
     </div>
   `;
 }
@@ -189,8 +163,9 @@ function renderError(message) {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="error">
-      <div class="error-icon">🔍</div>
+      <div class="error-icon">⚠️</div>
       <p>${message}</p>
+      <button onclick="init()" class="retry-btn">Retry</button>
     </div>
   `;
 }
@@ -198,6 +173,8 @@ function renderError(message) {
 // Main initialization
 async function init() {
   try {
+    renderLoading();
+
     // Get current tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -219,18 +196,18 @@ async function init() {
       return;
     }
 
-    // Fetch rank and estimate traffic
-    const rank = await fetchTrancoRank(domain);
-    const monthlyVisits = estimateMonthlyVisits(rank);
-    const dailyData = generate30DayData(monthlyVisits);
-
-    renderStats(domain, rank, monthlyVisits, dailyData);
+    // Fetch traffic data from API
+    const data = await fetchTrafficData(domain);
+    renderStats(data);
 
   } catch (error) {
     console.error('TrafficPeek error:', error);
-    renderError('Failed to fetch traffic data');
+    renderError('Failed to fetch traffic data. Please try again.');
   }
 }
 
 // Initialize when popup opens
 document.addEventListener('DOMContentLoaded', init);
+
+// Make init available globally for retry button
+window.init = init;
