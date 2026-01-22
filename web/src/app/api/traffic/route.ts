@@ -17,64 +17,79 @@ interface TrafficData {
   source: string;
 }
 
-// Fallback estimation based on domain characteristics
-function estimateFromDomain(domain: string): TrafficData {
-  // Known domains with approximate traffic
-  const knownDomains: Record<string, { rank: number; visits: number }> = {
-    'google.com': { rank: 1, visits: 85000000000 },
-    'youtube.com': { rank: 2, visits: 35000000000 },
-    'facebook.com': { rank: 3, visits: 15000000000 },
-    'twitter.com': { rank: 5, visits: 6000000000 },
-    'x.com': { rank: 5, visits: 6000000000 },
-    'instagram.com': { rank: 4, visits: 6500000000 },
-    'linkedin.com': { rank: 15, visits: 1500000000 },
-    'reddit.com': { rank: 20, visits: 1700000000 },
-    'amazon.com': { rank: 10, visits: 2500000000 },
-    'github.com': { rank: 50, visits: 500000000 },
-    'stackoverflow.com': { rank: 100, visits: 100000000 },
-    'vercel.app': { rank: 5000, visits: 50000000 },
-  };
-
-  const domainLower = domain.toLowerCase();
-
-  // Check known domains
-  for (const [known, data] of Object.entries(knownDomains)) {
-    if (domainLower === known || domainLower.endsWith('.' + known)) {
-      return createEstimateResponse(domain, data.rank, data.visits);
-    }
-  }
-
-  // Estimate based on TLD and characteristics
-  let estimatedRank = 500000;
-
-  // TLD adjustments
-  if (domain.endsWith('.com')) estimatedRank = 200000;
-  else if (domain.endsWith('.org')) estimatedRank = 300000;
-  else if (domain.endsWith('.net')) estimatedRank = 350000;
-  else if (domain.endsWith('.io')) estimatedRank = 400000;
-  else if (domain.endsWith('.dev')) estimatedRank = 450000;
-  else if (domain.endsWith('.app')) estimatedRank = 400000;
-  else if (domain.endsWith('.ai')) estimatedRank = 300000;
-
-  // Shorter domains tend to be more popular
-  const parts = domain.split('.');
-  const mainPart = parts[0];
-  if (mainPart.length <= 4) estimatedRank *= 0.5;
-  else if (mainPart.length <= 8) estimatedRank *= 0.8;
-  else estimatedRank *= 1.2;
-
-  // Add some consistent variance based on domain name
-  const hash = domain.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  estimatedRank = Math.round(estimatedRank * (0.8 + (hash % 100) / 250));
-
-  // Estimate visits from rank using power law
-  const estimatedVisits = Math.round(1000000000 * Math.pow(estimatedRank, -0.7));
-
-  return createEstimateResponse(domain, estimatedRank, Math.max(1000, estimatedVisits));
+interface TrancoRank {
+  date: string;
+  rank: number;
 }
 
-function createEstimateResponse(domain: string, rank: number, visits: number): TrafficData {
-  // Generate 30-day history with some variance
+// Fetch real ranking from Tranco list (free API)
+async function fetchTrancoRank(domain: string): Promise<number | null> {
+  try {
+    const response = await fetch(
+      `https://tranco-list.eu/api/ranks/domain/${encodeURIComponent(domain)}`,
+      { next: { revalidate: 86400 } } // Cache for 24 hours
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.ranks && data.ranks.length > 0) {
+      // Return the most recent rank
+      return data.ranks[0].rank;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Tranco API error:', error);
+    return null;
+  }
+}
+
+// Calibrated estimation formula based on SimilarWeb data
+// Reference points:
+// - Rank 1 (google.com): ~85B visits
+// - Rank 7000 (lovable.dev): ~23M visits
+// Formula: visits = 85B * rank^(-0.93)
+function estimateVisitsFromRank(rank: number): number {
+  const baseVisits = 85_000_000_000; // 85B for rank 1
+  const exponent = -0.93;
+  const visits = Math.round(baseVisits * Math.pow(rank, exponent));
+  return Math.max(1000, visits); // Minimum 1000 visits
+}
+
+// Estimate engagement metrics based on rank
+function estimateEngagement(rank: number): {
+  avgVisitDuration: number;
+  pagesPerVisit: number;
+  bounceRate: number;
+} {
+  // Higher ranked sites tend to have better engagement
+  // Based on SimilarWeb patterns
+  const rankFactor = Math.min(1, 10000 / rank); // 1.0 for top 10k, decreasing after
+
+  return {
+    // Avg visit duration: 30s to 10min based on rank
+    avgVisitDuration: Math.round(30 + rankFactor * 570),
+    // Pages per visit: 1.5 to 5 based on rank
+    pagesPerVisit: Number((1.5 + rankFactor * 3.5).toFixed(1)),
+    // Bounce rate: 30% to 70% (lower is better for high rank)
+    bounceRate: Number((0.70 - rankFactor * 0.40).toFixed(2)),
+  };
+}
+
+// Create response with estimated data
+function createEstimateResponse(
+  domain: string,
+  rank: number,
+  visits: number,
+  source: string
+): TrafficData {
+  const engagement = estimateEngagement(rank);
+
+  // Generate 30-day history with realistic variance
   const history = [];
   const dailyBase = visits / 30;
   const now = new Date();
@@ -83,8 +98,9 @@ function createEstimateResponse(domain: string, rank: number, visits: number): T
     const date = new Date(now);
     date.setDate(date.getDate() - i);
     const dayOfWeek = date.getDay();
+    // Weekend traffic is typically 85% of weekday
     const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.85 : 1;
-    // Use consistent random based on date
+    // Add consistent daily variance (±15%)
     const seed = date.getDate() + date.getMonth() * 31 + domain.length;
     const randomFactor = 0.85 + ((seed * 17) % 30) / 100;
 
@@ -100,15 +116,45 @@ function createEstimateResponse(domain: string, rank: number, visits: number): T
     countryRank: null,
     categoryRank: null,
     monthlyVisits: visits,
-    avgVisitDuration: 60 + Math.round((1000000 / rank) * 10), // seconds
-    pagesPerVisit: 1.5 + (1000000 / rank) * 0.00001,
-    bounceRate: Math.min(0.8, Math.max(0.3, 0.5 + rank / 10000000)),
+    avgVisitDuration: engagement.avgVisitDuration,
+    pagesPerVisit: engagement.pagesPerVisit,
+    bounceRate: engagement.bounceRate,
     trafficHistory: history,
     isEstimate: true,
-    source: 'estimate',
+    source,
   };
 }
 
+// Fallback estimation when domain is not in Tranco
+function estimateUnrankedDomain(domain: string): TrafficData {
+  // For domains not in Tranco (outside top 1M), estimate based on characteristics
+  let estimatedRank = 2_000_000; // Default: outside top 1M
+
+  // TLD adjustments
+  if (domain.endsWith('.com')) estimatedRank = 1_500_000;
+  else if (domain.endsWith('.org')) estimatedRank = 1_800_000;
+  else if (domain.endsWith('.net')) estimatedRank = 1_900_000;
+  else if (domain.endsWith('.io')) estimatedRank = 1_200_000;
+  else if (domain.endsWith('.dev')) estimatedRank = 1_300_000;
+  else if (domain.endsWith('.app')) estimatedRank = 1_400_000;
+  else if (domain.endsWith('.ai')) estimatedRank = 1_100_000;
+
+  // Shorter domains tend to be more popular
+  const parts = domain.split('.');
+  const mainPart = parts[0];
+  if (mainPart.length <= 4) estimatedRank *= 0.7;
+  else if (mainPart.length <= 8) estimatedRank *= 0.85;
+  else estimatedRank *= 1.1;
+
+  // Add consistent variance based on domain name
+  const hash = domain.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  estimatedRank = Math.round(estimatedRank * (0.9 + (hash % 100) / 500));
+
+  const visits = estimateVisitsFromRank(estimatedRank);
+  return createEstimateResponse(domain, estimatedRank, visits, 'estimate');
+}
+
+// Fetch from RapidAPI SimilarWeb
 async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<TrafficData | null> {
   const key = apiKey || RAPIDAPI_KEY;
   if (!key) {
@@ -116,7 +162,6 @@ async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<Traff
   }
 
   try {
-    // Use the Similarweb Insights API - /all-insights endpoint
     const response = await fetch(
       `https://${RAPIDAPI_HOST}/all-insights?domain=${encodeURIComponent(domain)}`,
       {
@@ -137,9 +182,6 @@ async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<Traff
     console.log('RapidAPI response:', JSON.stringify(data, null, 2));
 
     // Parse the Similarweb Insights response
-    // The structure may vary, so we handle multiple possible formats
-
-    // Try to extract monthly visits
     let monthlyVisits: number | null = null;
     let globalRank: number | null = null;
     let countryRank: number | null = null;
@@ -150,7 +192,6 @@ async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<Traff
 
     // Check various response structures
     if (data.estimatedMonthlyVisits) {
-      // Array of monthly visits objects
       const visits = data.estimatedMonthlyVisits;
       if (Array.isArray(visits) && visits.length > 0) {
         monthlyVisits = visits[visits.length - 1]?.value || visits[visits.length - 1]?.visits || null;
@@ -188,7 +229,6 @@ async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<Traff
 
     // If we got valid data, return it
     if (monthlyVisits || globalRank) {
-      // Build history from monthly visits if available
       const history: Array<{ date: string; visits: number }> = [];
       const dailyVisits = (monthlyVisits || 0) / 30;
       const now = new Date();
@@ -246,12 +286,22 @@ export async function GET(request: NextRequest) {
   // Clean the domain
   const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
 
-  // Try to fetch real data first
+  // Try to fetch real data from RapidAPI first
   let data = await fetchFromRapidAPI(cleanDomain, apiKey || undefined);
 
-  // Fall back to estimation if API fails or no key
+  // Fall back to Tranco-based estimation if no API data
   if (!data) {
-    data = estimateFromDomain(cleanDomain);
+    // Fetch real ranking from Tranco
+    const trancoRank = await fetchTrancoRank(cleanDomain);
+
+    if (trancoRank) {
+      // Domain found in Tranco - use real rank with calibrated estimation
+      const visits = estimateVisitsFromRank(trancoRank);
+      data = createEstimateResponse(cleanDomain, trancoRank, visits, 'tranco');
+    } else {
+      // Domain not in Tranco - estimate based on characteristics
+      data = estimateUnrankedDomain(cleanDomain);
+    }
   }
 
   // Add CORS headers for extension

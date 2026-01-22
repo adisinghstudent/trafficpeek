@@ -163,10 +163,15 @@ function renderStats(data) {
   const trendIcon = trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→';
   const trendText = trend.percent > 0 ? `${trendIcon} ${trend.percent}%` : `${trendIcon} Stable`;
 
-  // Data source indicator
-  const sourceLabel = data.isEstimate ?
-    '<span class="source-badge estimate">Estimate</span>' :
-    '<span class="source-badge real">SimilarWeb</span>';
+  // Data source indicator based on source field
+  let sourceLabel;
+  if (data.source === 'similarweb') {
+    sourceLabel = '<span class="source-badge real">SimilarWeb</span>';
+  } else if (data.source === 'tranco') {
+    sourceLabel = '<span class="source-badge tranco">Tranco</span>';
+  } else {
+    sourceLabel = '<span class="source-badge estimate">Estimate</span>';
+  }
 
   const content = document.getElementById('content');
   content.innerHTML = `
