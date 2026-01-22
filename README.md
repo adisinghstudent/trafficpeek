@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](#install)
 
-**Free, open-source Chrome extension that shows estimated monthly visits and 30-day traffic graphs for any website you browse.**
+**Free, open-source Chrome extension that shows real monthly visits and 30-day traffic graphs for any website you browse.**
 
 <p align="center">
   <img src="https://trafficpeek.vercel.app/screenshot.png" alt="TrafficPeek Screenshot" width="360" />
@@ -44,45 +44,46 @@
 
 ## How It Works
 
-TrafficPeek provides website traffic data through two methods:
+TrafficPeek provides website traffic data through two sources:
 
-**With API Key (Real Data):**
-- Fetches real traffic data from SimilarWeb via RapidAPI
-- Provides accurate monthly visits and traffic trends
+**1. Tranco List (Top 1 Million Sites)**
+- Uses the [Tranco List](https://tranco-list.eu/) - a research-based domain ranking combining Alexa, Majestic, Umbrella, and Quantcast data
+- Provides real global rankings for the top 1 million websites
+- Traffic estimates calibrated against SimilarWeb data
 
-**Without API Key (Estimation):**
-- Uses an improved estimation model based on domain characteristics
-- **Tranco List Rankings** - A research-based domain ranking list combining Alexa, Majestic, Umbrella, and Quantcast data
-- **Traffic Estimation Model** - Exponential decay model that estimates monthly visits based on global ranking
-- **Trend Simulation** - Realistic 30-day traffic patterns with weekend variance and noise
+**2. SimilarWeb API (Any Website)**
+- Add your free RapidAPI key to get real SimilarWeb data for any website
+- Includes accurate monthly visits, bounce rate, pages per visit, and more
+- Works for sites outside the top 1 million
 
-> Note: Without an API key, traffic estimates are approximations based on ranking data, not actual analytics. For precise data, add your RapidAPI key or use the website's own analytics.
+> **Note:** For sites outside the Tranco top 1M, you'll need a SimilarWeb API key to see traffic data.
 
-## Getting Real Traffic Data (Optional)
+## Getting Real Traffic Data
 
-By default, TrafficPeek shows estimated traffic data. You can optionally add a RapidAPI key to get real SimilarWeb data.
+Add a free RapidAPI key to get real SimilarWeb data for any website (including sites outside the top 1M).
 
 ### Setup Instructions
 
-1. **Create a free account** at [RapidAPI](https://rapidapi.com)
+1. **Go to the SimilarWeb Insights API** on RapidAPI:
 
-2. **Subscribe to the "Similarweb Insights" API** (has a free tier):
-   Search for "Similarweb Insights" on [RapidAPI](https://rapidapi.com/search/similarweb%20insights)
+   👉 **[similarweb-insights.p.rapidapi.com](https://rapidapi.com/raynalddrapeau/api/similarweb-insights)**
 
-3. **Copy your RapidAPI key** from the API dashboard
+2. **Subscribe to the free tier** (click "Subscribe to Test")
+
+3. **Copy your API key** from the "X-RapidAPI-Key" field
 
 4. **Open TrafficPeek extension** and click the ⚙️ settings icon
 
 5. **Paste your API key** and save
 
-> **Note:** The free tier has limited requests per month. TrafficPeek will fall back to estimation if you run out of API calls.
+> **Note:** The free tier includes 100 requests/month. TrafficPeek will fall back to Tranco data for top 1M sites if you run out.
 
 ## Tech Stack
 
 - **Extension**: Vanilla JavaScript, Chrome Extension Manifest V3
 - **Landing Page**: Next.js 14, TypeScript, Tailwind CSS
 - **Hosting**: Vercel
-- **Data**: SimilarWeb via RapidAPI (optional) + estimation model
+- **Data**: [Tranco List](https://tranco-list.eu/) (top 1M) + [SimilarWeb API](https://rapidapi.com/raynalddrapeau/api/similarweb-insights) (optional)
 
 ## Project Structure
 
