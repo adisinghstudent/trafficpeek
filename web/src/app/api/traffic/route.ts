@@ -109,8 +109,9 @@ function createEstimateResponse(domain: string, rank: number, visits: number): T
   };
 }
 
-async function fetchFromRapidAPI(domain: string): Promise<TrafficData | null> {
-  if (!RAPIDAPI_KEY) {
+async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<TrafficData | null> {
+  const key = apiKey || RAPIDAPI_KEY;
+  if (!key) {
     return null;
   }
 
@@ -120,7 +121,7 @@ async function fetchFromRapidAPI(domain: string): Promise<TrafficData | null> {
       {
         method: 'GET',
         headers: {
-          'X-RapidAPI-Key': RAPIDAPI_KEY,
+          'X-RapidAPI-Key': key,
           'X-RapidAPI-Host': RAPIDAPI_HOST,
         },
       }
@@ -197,11 +198,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Extract API key from header or fall back to environment variable
+  const apiKey = request.headers.get('X-RapidAPI-Key') || process.env.RAPIDAPI_KEY;
+
   // Clean the domain
   const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
 
   // Try to fetch real data first
-  let data = await fetchFromRapidAPI(cleanDomain);
+  let data = await fetchFromRapidAPI(cleanDomain, apiKey || undefined);
 
   // Fall back to estimation if API fails or no key
   if (!data) {
@@ -213,7 +217,7 @@ export async function GET(request: NextRequest) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-RapidAPI-Key',
     },
   });
 }
@@ -223,7 +227,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-RapidAPI-Key',
     },
   });
 }

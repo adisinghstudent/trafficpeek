@@ -43,6 +43,27 @@
     .header h1 {
       font-size: 18px;
       font-weight: 600;
+      flex: 1;
+    }
+
+    .settings-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .settings-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .settings-btn.active {
+      color: #667eea;
     }
 
     .domain-info {
@@ -161,7 +182,7 @@
       gap: 16px;
     }
 
-    .spinner {
+    .spinner, .loading-spinner {
       width: 40px;
       height: 40px;
       border: 3px solid rgba(255,255,255,0.1);
@@ -273,15 +294,6 @@
       text-transform: uppercase;
     }
 
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
     .disclaimer {
       font-size: 10px;
       color: rgba(255,255,255,0.4);
@@ -301,7 +313,7 @@
       text-decoration: underline;
     }
 
-    .retry-btn {
+    .retry-btn, .btn {
       margin-top: 16px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #fff;
@@ -313,9 +325,13 @@
       transition: transform 0.2s, opacity 0.2s;
     }
 
-    .retry-btn:hover {
+    .retry-btn:hover, .btn:hover {
       opacity: 0.9;
       transform: scale(1.02);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
     }
 
     .no-data {
@@ -325,12 +341,135 @@
       width: 100%;
       padding: 40px 0;
     }
+
+    /* Settings Panel */
+    .settings-panel {
+      display: none;
+    }
+
+    .settings-panel.active {
+      display: block;
+    }
+
+    .settings-section {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .settings-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .settings-description {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .input-group input::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .api-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .api-status-dot.connected {
+      background: #22c55e;
+    }
+
+    .api-status-dot.disconnected {
+      background: #fbbf24;
+    }
+
+    .settings-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .settings-actions .btn {
+      flex: 1;
+      margin-top: 0;
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    .settings-link {
+      display: block;
+      color: #667eea;
+      font-size: 12px;
+      text-decoration: none;
+      margin-top: 8px;
+    }
+
+    .settings-link:hover {
+      text-decoration: underline;
+    }
+
+    .save-feedback {
+      text-align: center;
+      font-size: 12px;
+      color: #22c55e;
+      margin-top: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .save-feedback.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="logo">📊</div>
     <h1>TrafficPeek</h1>
+    <button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
   </div>
 
   <div id="content">
@@ -338,6 +477,41 @@
       <div class="spinner"></div>
       <p>Fetching traffic data...</p>
     </div>
+  </div>
+
+  <div id="settings" class="settings-panel">
+    <div class="settings-section">
+      <div class="settings-title">API Configuration</div>
+      <div class="settings-description">
+        Add your RapidAPI key to get real traffic data from SimilarWeb instead of estimates.
+      </div>
+      <div class="input-group">
+        <label>RapidAPI Key</label>
+        <input type="password" id="apiKeyInput" placeholder="Enter your RapidAPI key">
+      </div>
+      <div class="api-status" id="apiStatus">
+        <span class="api-status-dot disconnected"></span>
+        <span>Using estimates (no API key)</span>
+      </div>
+      <a href="https://rapidapi.com/apidojo/api/similar-web" target="_blank" class="settings-link">
+        Get a free API key from RapidAPI →
+      </a>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">How to get an API key</div>
+      <div class="settings-description">
+        1. Create a free account at <a href="https://rapidapi.com" target="_blank" style="color: #667eea;">rapidapi.com</a><br>
+        2. Subscribe to the <a href="https://rapidapi.com/apidojo/api/similar-web" target="_blank" style="color: #667eea;">Similar Web API</a> (free tier available)<br>
+        3. Copy your API key and paste it above
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn btn-secondary" id="backBtn">← Back</button>
+      <button class="btn" id="saveBtn">Save Settings</button>
+    </div>
+    <div class="save-feedback" id="saveFeedback">Settings saved!</div>
   </div>
 
   <div class="footer">

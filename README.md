@@ -32,7 +32,7 @@
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/anthropics/trafficpeek.git
+   git clone https://github.com/adisinghstudent/trafficpeek.git
    cd trafficpeek
    ```
 
@@ -44,20 +44,45 @@
 
 ## How It Works
 
-TrafficPeek estimates website traffic using:
+TrafficPeek provides website traffic data through two methods:
 
-1. **Tranco List Rankings** - A research-based domain ranking list combining Alexa, Majestic, Umbrella, and Quantcast data
-2. **Traffic Estimation Model** - Exponential decay model that estimates monthly visits based on global ranking
-3. **Trend Simulation** - Realistic 30-day traffic patterns with weekend variance and noise
+**With API Key (Real Data):**
+- Fetches real traffic data from SimilarWeb via RapidAPI
+- Provides accurate monthly visits and traffic trends
 
-> Note: Traffic estimates are approximations based on ranking data, not actual analytics. For precise data, use the website's own analytics.
+**Without API Key (Estimation):**
+- Uses an improved estimation model based on domain characteristics
+- **Tranco List Rankings** - A research-based domain ranking list combining Alexa, Majestic, Umbrella, and Quantcast data
+- **Traffic Estimation Model** - Exponential decay model that estimates monthly visits based on global ranking
+- **Trend Simulation** - Realistic 30-day traffic patterns with weekend variance and noise
+
+> Note: Without an API key, traffic estimates are approximations based on ranking data, not actual analytics. For precise data, add your RapidAPI key or use the website's own analytics.
+
+## Getting Real Traffic Data (Optional)
+
+By default, TrafficPeek shows estimated traffic data. You can optionally add a RapidAPI key to get real SimilarWeb data.
+
+### Setup Instructions
+
+1. **Create a free account** at [RapidAPI](https://rapidapi.com)
+
+2. **Subscribe to the "Similar Web" API** (has a free tier):
+   [https://rapidapi.com/apidojo/api/similar-web](https://rapidapi.com/apidojo/api/similar-web)
+
+3. **Copy your RapidAPI key** from the API dashboard
+
+4. **Open TrafficPeek extension** and click the ⚙️ settings icon
+
+5. **Paste your API key** and save
+
+> **Note:** The free tier has limited requests per month. TrafficPeek will fall back to estimation if you run out of API calls.
 
 ## Tech Stack
 
 - **Extension**: Vanilla JavaScript, Chrome Extension Manifest V3
 - **Landing Page**: Next.js 14, TypeScript, Tailwind CSS
 - **Hosting**: Vercel
-- **Data**: Tranco List (research-based domain ranking)
+- **Data**: SimilarWeb via RapidAPI (optional) + estimation model
 
 ## Project Structure
 
@@ -106,8 +131,8 @@ Contributions welcome! Feel free to:
 ## Links
 
 - **Website**: [trafficpeek.vercel.app](https://trafficpeek.vercel.app)
-- **Issues**: [GitHub Issues](https://github.com/anthropics/trafficpeek/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/anthropics/trafficpeek/discussions)
+- **Issues**: [GitHub Issues](https://github.com/adisinghstudent/trafficpeek/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/adisinghstudent/trafficpeek/discussions)
 
 ## License
 

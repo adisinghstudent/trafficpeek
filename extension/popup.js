@@ -3,6 +3,10 @@
 
 const API_BASE_URL = 'https://trafficpeek.vercel.app/api/traffic';
 
+// State
+let currentView = 'stats'; // 'stats' or 'settings'
+let apiKey = null;
+
 // Format large numbers
 function formatNumber(num) {
   if (num >= 1000000000) {
@@ -53,9 +57,94 @@ function extractDomain(url) {
   }
 }
 
+// Load settings from chrome.storage
+async function loadSettings() {
+  try {
+    const result = await chrome.storage.local.get(['rapidApiKey']);
+    apiKey = result.rapidApiKey || null;
+    updateApiStatus();
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+  }
+}
+
+// Save settings to chrome.storage
+async function saveSettings() {
+  try {
+    const input = document.getElementById('apiKeyInput');
+    apiKey = input.value.trim() || null;
+    await chrome.storage.local.set({ rapidApiKey: apiKey });
+    updateApiStatus();
+    showSaveFeedback();
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+  }
+}
+
+// Update API status indicator
+function updateApiStatus() {
+  const statusEl = document.getElementById('apiStatus');
+  if (!statusEl) return;
+
+  if (apiKey) {
+    statusEl.innerHTML = `
+      <span class="api-status-dot connected"></span>
+      <span>API key configured</span>
+    `;
+  } else {
+    statusEl.innerHTML = `
+      <span class="api-status-dot disconnected"></span>
+      <span>Using estimates (no API key)</span>
+    `;
+  }
+}
+
+// Show save feedback
+function showSaveFeedback() {
+  const feedback = document.getElementById('saveFeedback');
+  if (feedback) {
+    feedback.classList.add('show');
+    setTimeout(() => feedback.classList.remove('show'), 2000);
+  }
+}
+
+// Toggle between stats and settings view
+function toggleView(view) {
+  currentView = view;
+  const content = document.getElementById('content');
+  const settings = document.getElementById('settings');
+  const settingsBtn = document.getElementById('settingsBtn');
+
+  if (view === 'settings') {
+    content.style.display = 'none';
+    settings.classList.add('active');
+    settingsBtn.classList.add('active');
+    // Load current API key into input
+    const input = document.getElementById('apiKeyInput');
+    if (input && apiKey) {
+      input.value = apiKey;
+    }
+  } else {
+    content.style.display = 'block';
+    settings.classList.remove('active');
+    settingsBtn.classList.remove('active');
+  }
+}
+
 // Fetch traffic data from backend API
 async function fetchTrafficData(domain) {
-  const response = await fetch(`${API_BASE_URL}?domain=${encodeURIComponent(domain)}`);
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  // Add API key header if available
+  if (apiKey) {
+    headers['X-RapidAPI-Key'] = apiKey;
+  }
+
+  const response = await fetch(`${API_BASE_URL}?domain=${encodeURIComponent(domain)}`, {
+    headers,
+  });
 
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`);
@@ -140,11 +229,19 @@ function renderStats(data) {
 
     ${data.isEstimate ? `
     <div class="disclaimer">
-      Traffic data is estimated based on domain ranking.
-      <a href="https://trafficpeek.vercel.app" target="_blank">Learn more</a>
+      Traffic data is estimated. <a href="#" id="addApiKeyLink">Add API key</a> for real data.
     </div>
     ` : ''}
   `;
+
+  // Add click handler for "Add API key" link
+  const addApiKeyLink = document.getElementById('addApiKeyLink');
+  if (addApiKeyLink) {
+    addApiKeyLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleView('settings');
+    });
+  }
 }
 
 // Render loading state
@@ -170,35 +267,73 @@ function renderError(message) {
   `;
 }
 
+// Setup event listeners
+function setupEventListeners() {
+  // Settings button
+  const settingsBtn = document.getElementById('settingsBtn');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      toggleView(currentView === 'settings' ? 'stats' : 'settings');
+    });
+  }
+
+  // Back button
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      toggleView('stats');
+      init(); // Refresh data with new settings
+    });
+  }
+
+  // Save button
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveSettings);
+  }
+}
+
 // Main initialization
 async function init() {
   try {
-    renderLoading();
+    // Load settings first
+    await loadSettings();
 
-    // Get current tab
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    // Setup event listeners
+    setupEventListeners();
 
-    if (!tab?.url) {
-      renderError('Unable to access current tab');
-      return;
+    // Update API status in settings panel
+    updateApiStatus();
+
+    // Only fetch data if we're in stats view
+    if (currentView !== 'settings') {
+      renderLoading();
+
+      // Get current tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+      if (!tab?.url) {
+        renderError('Unable to access current tab');
+        return;
+      }
+
+      const domain = extractDomain(tab.url);
+
+      if (!domain) {
+        renderError('Invalid URL');
+        return;
+      }
+
+      // Check for special URLs
+      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+        renderError('Cannot analyze browser pages');
+        return;
+      }
+
+      // Fetch traffic data from API
+      const data = await fetchTrafficData(domain);
+      renderStats(data);
     }
-
-    const domain = extractDomain(tab.url);
-
-    if (!domain) {
-      renderError('Invalid URL');
-      return;
-    }
-
-    // Check for special URLs
-    if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-      renderError('Cannot analyze browser pages');
-      return;
-    }
-
-    // Fetch traffic data from API
-    const data = await fetchTrafficData(domain);
-    renderStats(data);
 
   } catch (error) {
     console.error('TrafficPeek error:', error);

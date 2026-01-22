@@ -142,6 +142,66 @@ export default function Home() {
           </div>
         </section>
 
+        {/* API Key Section */}
+        <section className="max-w-4xl mx-auto mt-32">
+          <h2 className="font-serif text-[clamp(36px,6vw,64px)] text-center mb-16">
+            Want{" "}
+            <span className="relative inline-block">
+              <span className="relative z-10">real data</span>
+              <span
+                className="absolute left-0 right-0 bottom-[0.1em] h-[0.3em] bg-[#FEF08A] -z-0"
+                style={{ transform: "rotate(0.5deg)" }}
+              />
+            </span>
+            ?
+          </h2>
+          <div className="bg-white rounded-3xl p-8 border border-black/5">
+            <p className="text-xl text-[#4A5565] mb-8 leading-relaxed">
+              By default, TrafficPeek shows <em>estimated</em> traffic based on domain rankings.
+              Want real data from SimilarWeb? Add your free RapidAPI key!
+            </p>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="font-serif text-2xl mb-4">How to get real data</h3>
+                <ol className="space-y-4 text-lg text-[#4A5565]">
+                  <li className="flex items-start gap-3">
+                    <span className="flex-shrink-0 w-7 h-7 bg-[#EB4F3E] text-white rounded-full flex items-center justify-center text-sm font-medium">1</span>
+                    <span>Create a free account at <a href="https://rapidapi.com" target="_blank" rel="noopener noreferrer" className="text-[#EB4F3E] hover:underline">rapidapi.com</a></span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex-shrink-0 w-7 h-7 bg-[#EB4F3E] text-white rounded-full flex items-center justify-center text-sm font-medium">2</span>
+                    <span>Subscribe to the <a href="https://rapidapi.com/apidojo/api/similar-web" target="_blank" rel="noopener noreferrer" className="text-[#EB4F3E] hover:underline">Similar Web API</a> (free tier available)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex-shrink-0 w-7 h-7 bg-[#EB4F3E] text-white rounded-full flex items-center justify-center text-sm font-medium">3</span>
+                    <span>Copy your API key from RapidAPI</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex-shrink-0 w-7 h-7 bg-[#EB4F3E] text-white rounded-full flex items-center justify-center text-sm font-medium">4</span>
+                    <span>Click the ⚙️ icon in TrafficPeek and paste your key</span>
+                  </li>
+                </ol>
+              </div>
+              <div className="bg-[#FAF9F7] rounded-2xl p-6">
+                <h4 className="font-medium text-lg mb-3">Without API Key</h4>
+                <ul className="space-y-2 text-[#6B7280] mb-6">
+                  <li>✓ Estimated traffic data</li>
+                  <li>✓ Global ranking</li>
+                  <li>✓ 30-day trend chart</li>
+                  <li className="text-[#9CA3AF]">✗ Real SimilarWeb data</li>
+                </ul>
+                <h4 className="font-medium text-lg mb-3">With API Key</h4>
+                <ul className="space-y-2 text-[#22c55e]">
+                  <li>✓ Real SimilarWeb traffic data</li>
+                  <li>✓ Accurate monthly visits</li>
+                  <li>✓ Engagement metrics</li>
+                  <li>✓ Country & category rankings</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Install Section */}
         <section id="install" className="max-w-4xl mx-auto mt-32">
           <h2 className="font-serif text-[clamp(36px,6vw,64px)] text-center mb-16">
