@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+web/node_modules/
+extension/node_modules/
+
+# Bun
+bun.lockb
+
+# Build
+web/.next/
+web/out/
+extension/dist/
+
+# Secrets
+.env
+.env.local
+web/.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel/
+
+# Promo (not pushed to GitHub)
+.promo/
+.vercel

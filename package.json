@@ -1,0 +1,10 @@
+{
+  "name": "trafficpeek",
+  "private": true,
+  "scripts": {
+    "dev": "cd web && bun run dev",
+    "build": "cd web && bun run build",
+    "build:extension": "cd extension && bun run build",
+    "deploy": "vercel --prod"
+  }
+}
