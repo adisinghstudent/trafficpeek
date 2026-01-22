@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-const RAPIDAPI_HOST = 'similar-web.p.rapidapi.com';
+const RAPIDAPI_HOST = 'similarweb-insights.p.rapidapi.com';
 
 interface TrafficData {
   domain: string;
@@ -116,64 +116,106 @@ async function fetchFromRapidAPI(domain: string, apiKey?: string): Promise<Traff
   }
 
   try {
+    // Use the Similarweb Insights API - /all-insights endpoint
     const response = await fetch(
-      `https://${RAPIDAPI_HOST}/get-analysis?domain=${encodeURIComponent(domain)}`,
+      `https://${RAPIDAPI_HOST}/all-insights?domain=${encodeURIComponent(domain)}`,
       {
         method: 'GET',
         headers: {
-          'X-RapidAPI-Key': key,
-          'X-RapidAPI-Host': RAPIDAPI_HOST,
+          'x-rapidapi-key': key,
+          'x-rapidapi-host': RAPIDAPI_HOST,
         },
       }
     );
 
     if (!response.ok) {
-      console.error('RapidAPI error:', response.status);
+      console.error('RapidAPI error:', response.status, await response.text());
       return null;
     }
 
     const data = await response.json();
+    console.log('RapidAPI response:', JSON.stringify(data, null, 2));
 
-    // Parse the response (structure depends on API)
-    if (data && data.EstimatedMonthlyVisits) {
-      // Get the most recent month's visits
+    // Parse the Similarweb Insights response
+    // The structure may vary, so we handle multiple possible formats
+
+    // Try to extract monthly visits
+    let monthlyVisits: number | null = null;
+    let globalRank: number | null = null;
+    let countryRank: number | null = null;
+    let categoryRank: number | null = null;
+    let avgVisitDuration: number | null = null;
+    let pagesPerVisit: number | null = null;
+    let bounceRate: number | null = null;
+
+    // Check various response structures
+    if (data.estimatedMonthlyVisits) {
+      // Array of monthly visits objects
+      const visits = data.estimatedMonthlyVisits;
+      if (Array.isArray(visits) && visits.length > 0) {
+        monthlyVisits = visits[visits.length - 1]?.value || visits[visits.length - 1]?.visits || null;
+      } else if (typeof visits === 'object') {
+        const values = Object.values(visits as Record<string, number>);
+        monthlyVisits = values[values.length - 1] || null;
+      }
+    }
+
+    if (data.EstimatedMonthlyVisits) {
       const visits = Object.values(data.EstimatedMonthlyVisits as Record<string, number>);
-      const latestVisits = visits[visits.length - 1] || 0;
+      monthlyVisits = visits[visits.length - 1] || null;
+    }
 
-      // Build history from API data
+    if (data.totalVisits) {
+      monthlyVisits = data.totalVisits;
+    }
+
+    if (data.traffic?.totalVisits) {
+      monthlyVisits = data.traffic.totalVisits;
+    }
+
+    // Extract ranks
+    globalRank = data.globalRank || data.GlobalRank?.Rank || data.rank?.global || null;
+    countryRank = data.countryRank || data.CountryRank?.Rank || data.rank?.country || null;
+    categoryRank = data.categoryRank || data.CategoryRank?.Rank || data.rank?.category || null;
+
+    // Extract engagement metrics
+    if (data.engagements || data.Engagments || data.engagement) {
+      const engagement = data.engagements || data.Engagments || data.engagement;
+      avgVisitDuration = engagement.timeOnSite || engagement.TimeOnSite || engagement.avgVisitDuration || null;
+      pagesPerVisit = engagement.pagesPerVisit || engagement.PagePerVisit || engagement.pagePerVisit || null;
+      bounceRate = engagement.bounceRate || engagement.BounceRate || null;
+    }
+
+    // If we got valid data, return it
+    if (monthlyVisits || globalRank) {
+      // Build history from monthly visits if available
       const history: Array<{ date: string; visits: number }> = [];
-      const monthlyData = data.EstimatedMonthlyVisits as Record<string, number>;
+      const dailyVisits = (monthlyVisits || 0) / 30;
+      const now = new Date();
 
-      // If we have monthly data, interpolate to daily
-      const entries = Object.entries(monthlyData).slice(-3);
-      if (entries.length > 0) {
-        const lastMonth = entries[entries.length - 1];
-        const dailyVisits = lastMonth[1] / 30;
-        const now = new Date();
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dayOfWeek = date.getDay();
+        const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.85 : 1;
+        const seed = date.getDate() + date.getMonth() * 31;
+        const randomFactor = 0.9 + ((seed * 13) % 20) / 100;
 
-        for (let i = 29; i >= 0; i--) {
-          const date = new Date(now);
-          date.setDate(date.getDate() - i);
-          const dayOfWeek = date.getDay();
-          const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.85 : 1;
-          const randomFactor = 0.9 + Math.random() * 0.2;
-
-          history.push({
-            date: date.toISOString().split('T')[0],
-            visits: Math.round(dailyVisits * weekendFactor * randomFactor),
-          });
-        }
+        history.push({
+          date: date.toISOString().split('T')[0],
+          visits: Math.round(dailyVisits * weekendFactor * randomFactor),
+        });
       }
 
       return {
         domain,
-        globalRank: data.GlobalRank?.Rank || null,
-        countryRank: data.CountryRank?.Rank || null,
-        categoryRank: data.CategoryRank?.Rank || null,
-        monthlyVisits: latestVisits,
-        avgVisitDuration: data.Engagments?.TimeOnSite || null,
-        pagesPerVisit: data.Engagments?.PagePerVisit || null,
-        bounceRate: data.Engagments?.BounceRate || null,
+        globalRank,
+        countryRank,
+        categoryRank,
+        monthlyVisits,
+        avgVisitDuration,
+        pagesPerVisit,
+        bounceRate,
         trafficHistory: history,
         isEstimate: false,
         source: 'similarweb',

@@ -66,8 +66,8 @@ By default, TrafficPeek shows estimated traffic data. You can optionally add a R
 
 1. **Create a free account** at [RapidAPI](https://rapidapi.com)
 
-2. **Subscribe to the "Similar Web" API** (has a free tier):
-   [https://rapidapi.com/apidojo/api/similar-web](https://rapidapi.com/apidojo/api/similar-web)
+2. **Subscribe to the "Similarweb Insights" API** (has a free tier):
+   Search for "Similarweb Insights" on [RapidAPI](https://rapidapi.com/search/similarweb%20insights)
 
 3. **Copy your RapidAPI key** from the API dashboard
 

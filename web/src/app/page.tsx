@@ -170,7 +170,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="flex-shrink-0 w-7 h-7 bg-[#EB4F3E] text-white rounded-full flex items-center justify-center text-sm font-medium">2</span>
-                    <span>Subscribe to the <a href="https://rapidapi.com/apidojo/api/similar-web" target="_blank" rel="noopener noreferrer" className="text-[#EB4F3E] hover:underline">Similar Web API</a> (free tier available)</span>
+                    <span>Subscribe to <a href="https://rapidapi.com/search/similarweb%20insights" target="_blank" rel="noopener noreferrer" className="text-[#EB4F3E] hover:underline">Similarweb Insights API</a> (free tier available)</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="flex-shrink-0 w-7 h-7 bg-[#EB4F3E] text-white rounded-full flex items-center justify-center text-sm font-medium">3</span>
